@@ -146,6 +146,41 @@
       outline-offset: 2px;
     }
 
+    .important-toggle {
+      display: inline-flex;
+      flex: 0 0 auto;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      min-height: 42px;
+      padding: 0 9px;
+      border: 1px solid #f2e4e5;
+      border-radius: 12px;
+      background: #fffafa;
+      color: #9b8987;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: color .18s, background .18s, border-color .18s;
+    }
+
+    .important-toggle:has(input:checked) {
+      border-color: #efcbd2;
+      background: #fff1f3;
+      color: var(--pink);
+    }
+
+    .important-toggle input {
+      width: 15px;
+      height: 15px;
+      margin: 0;
+      accent-color: var(--pink);
+      cursor: pointer;
+    }
+
+    .important-toggle .star { color: #c9b8b6; font-size: 14px; line-height: 1; transition: color .18s, transform .18s; }
+    .important-toggle:has(input:checked) .star { color: #e3a743; transform: scale(1.12); }
+
     .list { margin: 0; padding: 7px 20px; list-style: none; background: #fff; }
 
     .task {
@@ -178,6 +213,14 @@
       font-size: 15px;
       line-height: 1.5;
       transition: color .18s;
+    }
+
+    .important-mark {
+      flex: 0 0 auto;
+      color: #e3a743;
+      font-size: 18px;
+      line-height: 1;
+      filter: drop-shadow(0 1px 1px rgba(185, 125, 34, .12));
     }
 
     .task.is-complete .task-text {
@@ -264,6 +307,10 @@
     <section class="card" aria-label="할 일 목록">
       <form id="task-form">
         <input id="task-input" type="text" placeholder="새로운 할 일을 입력하세요" autocomplete="off" aria-label="새로운 할 일">
+        <label class="important-toggle" for="important-input">
+          <input id="important-input" type="checkbox" aria-label="중요한 할 일로 표시">
+          <span class="star" aria-hidden="true">★</span><span>중요</span>
+        </label>
         <button class="add-button" type="submit">추가</button>
       </form>
       <ul class="list" id="task-list" aria-live="polite"></ul>
@@ -281,6 +328,7 @@
   <script>
     const form = document.querySelector('#task-form');
     const input = document.querySelector('#task-input');
+    const importantInput = document.querySelector('#important-input');
     const list = document.querySelector('#task-list');
     const emptyState = document.querySelector('#empty-state');
     const footer = document.querySelector('#task-footer');
@@ -310,6 +358,17 @@
         text.className = 'task-text';
         text.textContent = task.text;
 
+        if (task.important) {
+          const star = document.createElement('span');
+          star.className = 'important-mark';
+          star.textContent = '★';
+          star.setAttribute('role', 'img');
+          star.setAttribute('aria-label', '중요');
+          item.append(checkbox, text, star);
+        } else {
+          item.append(checkbox, text);
+        }
+
         const remove = document.createElement('button');
         remove.className = 'delete-button';
         remove.type = 'button';
@@ -321,7 +380,7 @@
           render();
         });
 
-        item.append(checkbox, text, remove);
+        item.append(remove);
         list.append(item);
       }
 
@@ -340,8 +399,9 @@
         return;
       }
 
-      tasks.push({ id: nextId++, text, completed: false });
+      tasks.push({ id: nextId++, text, completed: false, important: importantInput.checked });
       input.value = '';
+      importantInput.checked = false;
       render();
       input.focus();
     });
