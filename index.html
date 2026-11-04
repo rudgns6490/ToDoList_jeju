@@ -279,6 +279,83 @@
 
     .footer strong { color: var(--pink); font-weight: 750; }
 
+    .topbar {
+      position: absolute;
+      top: 22px;
+      right: max(20px, calc((100vw - 1120px) / 2));
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .auth-trigger, .logout-button {
+      min-height: 42px;
+      padding: 0 16px;
+      border: 1px solid #efd9dd;
+      border-radius: 999px;
+      background: rgba(255,255,255,.9);
+      color: var(--pink-dark);
+      font-size: 13px;
+      font-weight: 750;
+      cursor: pointer;
+      transition: background .18s, transform .18s;
+    }
+
+    .auth-trigger:hover, .logout-button:hover { background: #fff0f2; transform: translateY(-1px); }
+    .user-email { max-width: min(42vw, 240px); overflow: hidden; color: var(--brown); font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
+
+    .auth-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      display: grid;
+      padding: 20px;
+      place-items: center;
+      background: rgba(74, 62, 61, .28);
+      backdrop-filter: blur(4px);
+    }
+
+    .auth-backdrop[hidden] { display: none; }
+
+    .auth-dialog {
+      position: relative;
+      width: min(100%, 410px);
+      padding: 30px;
+      border: 1px solid #f1dfe1;
+      border-radius: 24px;
+      background: #fffdfd;
+      box-shadow: 0 24px 70px rgba(77, 45, 51, .2);
+    }
+
+    .auth-close {
+      position: absolute;
+      top: 14px;
+      right: 15px;
+      width: 36px;
+      height: 36px;
+      border: 0;
+      border-radius: 50%;
+      background: transparent;
+      color: var(--muted);
+      font-size: 23px;
+      cursor: pointer;
+    }
+
+    .auth-close:hover { background: #fff0f2; color: var(--pink-dark); }
+    .auth-dialog h2 { margin: 0 0 8px; color: var(--brown); font-size: 25px; letter-spacing: -.04em; }
+    .auth-description { margin: 0 0 22px; color: var(--muted); font-size: 14px; line-height: 1.6; }
+    .auth-form { display: grid; gap: 14px; }
+    .auth-field { display: grid; gap: 7px; color: var(--brown); font-size: 13px; font-weight: 700; }
+    .auth-field input { width: 100%; height: 48px; padding: 0 14px; border: 1px solid #f0e4e3; border-radius: 12px; background: #fffafa; color: var(--brown); font: inherit; font-size: 14px; }
+    .auth-field input:focus { border-color: #d89aa5; outline: 3px solid rgba(184, 107, 123, .12); background: #fff; }
+    .auth-submit { min-height: 48px; margin-top: 4px; border: 0; border-radius: 13px; background: var(--pink); color: #fff; font-weight: 750; cursor: pointer; }
+    .auth-submit:hover { background: var(--pink-dark); }
+    .auth-submit:disabled { opacity: .65; cursor: wait; }
+    .auth-switch { margin: 18px 0 0; color: var(--muted); text-align: center; font-size: 13px; }
+    .auth-switch button { padding: 0; border: 0; background: transparent; color: var(--pink-dark); font: inherit; font-weight: 750; cursor: pointer; }
+    .auth-message { min-height: 20px; margin: 14px 0 0; color: var(--pink-dark); font-size: 13px; line-height: 1.5; }
+
     @keyframes arrive {
       from { opacity: 0; transform: translateY(-5px); }
       to { opacity: 1; transform: translateY(0); }
@@ -286,6 +363,10 @@
 
     @media (max-width: 480px) {
       body { padding: 48px 16px; }
+      .topbar { top: 14px; right: 14px; gap: 7px; }
+      .auth-trigger, .logout-button { min-height: 38px; padding: 0 12px; font-size: 12px; }
+      .user-email { max-width: 38vw; font-size: 12px; }
+      .auth-dialog { padding: 26px 22px; }
       form { gap: 8px; padding: 14px; }
       .add-button { min-width: 70px; padding: 0 13px; }
       .list { padding-right: 14px; padding-left: 14px; }
@@ -299,6 +380,12 @@
   </style>
 </head>
 <body>
+  <header class="topbar" aria-label="계정">
+    <button class="auth-trigger" id="auth-open" type="button">로그인</button>
+    <span class="user-email" id="user-email" hidden></span>
+    <button class="logout-button" id="auth-logout" type="button" hidden>로그아웃</button>
+  </header>
+
   <main class="app">
     <p class="eyebrow">MY LITTLE PLAN</p>
     <h1>오늘도 <span>차근차근</span><i class="title-heart" aria-hidden="true">♥</i></h1>
@@ -325,7 +412,28 @@
     </section>
   </main>
 
-  <script>
+  <div class="auth-backdrop" id="auth-backdrop" hidden>
+    <section class="auth-dialog" role="dialog" aria-modal="true" aria-labelledby="auth-title" aria-describedby="auth-description">
+      <button class="auth-close" id="auth-close" type="button" aria-label="닫기">×</button>
+      <h2 id="auth-title">로그인</h2>
+      <p class="auth-description" id="auth-description">이메일과 비밀번호로 내 계정에 로그인해요.</p>
+      <form class="auth-form" id="auth-form">
+        <label class="auth-field" for="auth-email">이메일
+          <input id="auth-email" type="email" autocomplete="email" placeholder="you@example.com" required>
+        </label>
+        <label class="auth-field" for="auth-password">비밀번호
+          <input id="auth-password" type="password" autocomplete="current-password" minlength="6" placeholder="6자 이상 입력해 주세요" required>
+        </label>
+        <button class="auth-submit" id="auth-submit" type="submit">로그인</button>
+      </form>
+      <p class="auth-switch"><span id="auth-switch-copy">아직 계정이 없나요?</span> <button id="auth-switch" type="button">회원가입</button></p>
+      <p class="auth-message" id="auth-message" role="status" aria-live="polite"></p>
+    </section>
+  </div>
+
+  <script type="module">
+    import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
     const form = document.querySelector('#task-form');
     const input = document.querySelector('#task-input');
     const importantInput = document.querySelector('#important-input');
@@ -334,6 +442,130 @@
     const footer = document.querySelector('#task-footer');
     const remainingCount = document.querySelector('#remaining-count');
     const totalCount = document.querySelector('#total-count');
+    const authOpen = document.querySelector('#auth-open');
+    const authLogout = document.querySelector('#auth-logout');
+    const userEmail = document.querySelector('#user-email');
+    const authBackdrop = document.querySelector('#auth-backdrop');
+    const authForm = document.querySelector('#auth-form');
+    const authEmail = document.querySelector('#auth-email');
+    const authPassword = document.querySelector('#auth-password');
+    const authTitle = document.querySelector('#auth-title');
+    const authDescription = document.querySelector('#auth-description');
+    const authSubmit = document.querySelector('#auth-submit');
+    const authSwitch = document.querySelector('#auth-switch');
+    const authSwitchCopy = document.querySelector('#auth-switch-copy');
+    const authMessage = document.querySelector('#auth-message');
+    let supabase;
+    let authMode = 'login';
+    let currentUser = null;
+    let authConfigError = null;
+
+    function showUser(user) {
+      currentUser = user;
+      authOpen.hidden = Boolean(user);
+      userEmail.hidden = !user;
+      authLogout.hidden = !user;
+      userEmail.textContent = user?.email ?? '';
+      if (user) closeAuthDialog();
+    }
+
+    function openAuthDialog() {
+      authMessage.textContent = authConfigError || '';
+      authBackdrop.hidden = false;
+      authEmail.focus();
+    }
+
+    function closeAuthDialog() {
+      authBackdrop.hidden = true;
+      authOpen.focus();
+    }
+
+    function setAuthMode(mode) {
+      authMode = mode;
+      const isSignup = mode === 'signup';
+      authTitle.textContent = isSignup ? '회원가입' : '로그인';
+      authDescription.textContent = isSignup ? '이메일과 비밀번호로 새 계정을 만들어요.' : '이메일과 비밀번호로 내 계정에 로그인해요.';
+      authSubmit.textContent = isSignup ? '회원가입' : '로그인';
+      authSwitchCopy.textContent = isSignup ? '이미 계정이 있나요?' : '아직 계정이 없나요?';
+      authSwitch.textContent = isSignup ? '로그인' : '회원가입';
+      authPassword.autocomplete = isSignup ? 'new-password' : 'current-password';
+      authMessage.textContent = '';
+    }
+
+    authOpen.addEventListener('click', openAuthDialog);
+    document.querySelector('#auth-close').addEventListener('click', closeAuthDialog);
+    authBackdrop.addEventListener('click', (event) => {
+      if (event.target === authBackdrop) closeAuthDialog();
+    });
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && !authBackdrop.hidden) closeAuthDialog();
+    });
+    authSwitch.addEventListener('click', () => setAuthMode(authMode === 'login' ? 'signup' : 'login'));
+
+    authForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      if (!supabase) {
+        authMessage.textContent = authConfigError || '인증 설정을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.';
+        return;
+      }
+
+      authSubmit.disabled = true;
+      authMessage.textContent = '';
+      const email = authEmail.value.trim();
+      const password = authPassword.value;
+      try {
+        if (authMode === 'signup') {
+          const { data, error } = await supabase.auth.signUp({ email, password });
+          if (error) throw error;
+          if (data.session) {
+            showUser(data.user);
+          } else {
+            authMessage.textContent = '가입 확인 메일을 보냈어요. 이메일의 링크를 눌러 가입을 완료해 주세요.';
+            authPassword.value = '';
+          }
+        } else {
+          const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+          if (error) throw error;
+          showUser(data.user);
+        }
+      } catch (error) {
+        authMessage.textContent = error.message || '요청을 처리하지 못했어요. 다시 시도해 주세요.';
+      } finally {
+        authSubmit.disabled = false;
+      }
+    });
+
+    authLogout.addEventListener('click', async () => {
+      if (!supabase) return;
+      authLogout.disabled = true;
+      const { error } = await supabase.auth.signOut();
+      if (error) authMessage.textContent = error.message;
+      else showUser(null);
+      authLogout.disabled = false;
+    });
+
+    async function initializeAuth() {
+      try {
+        const response = await fetch('/api/config');
+        if (!response.ok) {
+          if (response.status === 404) {
+            throw new Error('인증 설정 경로를 찾지 못했어요. Vercel에 최신 버전을 배포했는지 확인해 주세요.');
+          }
+          throw new Error(`인증 설정을 불러오지 못했어요. (HTTP ${response.status})`);
+        }
+        const { supabaseUrl, supabaseKey, error: configError } = await response.json();
+        if (configError) throw new Error(configError);
+        if (!supabaseUrl || !supabaseKey) throw new Error('Supabase 환경 변수가 설정되지 않았어요.');
+        supabase = createClient(supabaseUrl, supabaseKey);
+        const { data: { session } } = await supabase.auth.getSession();
+        showUser(session?.user ?? null);
+        supabase.auth.onAuthStateChange((_event, nextSession) => showUser(nextSession?.user ?? null));
+      } catch (error) {
+        authConfigError = error.message;
+      }
+    }
+
+    initializeAuth();
     const tasks = [];
     let nextId = 1;
 
